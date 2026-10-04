@@ -76,6 +76,16 @@ class CarPlayVideoActivity : Activity() {
         }
     }
 
+    private val videoModeKeys = VideoModeKeys()
+
+    override fun dispatchKeyEvent(event: android.view.KeyEvent): Boolean =
+        videoModeKeys.dispatch(this, event) || super.dispatchKeyEvent(event)
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (!hasFocus) videoModeKeys.clear()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)

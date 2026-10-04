@@ -24,6 +24,7 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
 import android.util.Log
+import android.view.KeyEvent
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -500,6 +501,7 @@ class DiPlayActivity : ComponentActivity() {
             }
             card.addView(button("${getString(R.string.choose_iphone_prefix)}${DiPlayPreferences.phoneName(this)}", false) { choosePhone() }, matchButton(12, 60))
         }
+        videoModeSettings(content)
         bydAdbSettings(content)
         section(content, getString(R.string.display_and_performance), R.drawable.ic_dp_display) { card ->
             val nightModes = CarPlayNightMode.entries
@@ -806,6 +808,69 @@ class DiPlayActivity : ComponentActivity() {
             card.addView(button(getString(R.string.about_diplay), false) { page = "about"; render() }, matchButton(0, 60))
         }
         languageSettings(content)
+    }
+
+    private val videoModeKeys = VideoModeKeys()
+
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (!videoModeKeys.dispatch(this, event)) return super.dispatchKeyEvent(event)
+        if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) render()
+        return true
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (!hasFocus) videoModeKeys.clear()
+    }
+
+    private fun videoModeSettings(content: LinearLayout) {
+        section(content, getString(R.string.video_playback_title), R.drawable.ic_dp_display) { card ->
+            toggle(card, getString(R.string.video_manual_title), getString(R.string.video_manual_description),
+                VideoModeSettings.manual(this)) {
+                VideoModeSettings.setManual(this, it)
+                reconnectForVehicleSetting()
+                render()
+            }
+            if (VideoModeSettings.manual(this)) {
+                toggle(card, getString(R.string.video_allowed_title), getString(R.string.video_allowed_description),
+                    VideoModeSettings.allowed(this)) { VideoModeSettings.setAllowed(this, it) }
+                VideoModeSettings.Action.entries.forEach { action ->
+                    val title = getString(when (action) {
+                        VideoModeSettings.Action.TOGGLE -> R.string.video_shortcut_toggle
+                        VideoModeSettings.Action.ON -> R.string.video_shortcut_on
+                        VideoModeSettings.Action.OFF -> R.string.video_shortcut_off
+                    })
+                    val shortcut = VideoModeSettings.shortcut(this, action).label().ifEmpty { getString(R.string.video_shortcut_unassigned) }
+                    card.addView(button("$title · $shortcut", false) { recordVideoShortcut(action, title) }, matchButton(12, 60))
+                }
+                card.addView(label(getString(R.string.video_shortcut_description), 14, MUTED))
+            }
+        }
+    }
+
+    private fun recordVideoShortcut(action: VideoModeSettings.Action, title: String) {
+        val dialog = AlertDialog.Builder(this).setTitle(title).setMessage(R.string.video_shortcut_record)
+            .setNegativeButton(R.string.cancel, null)
+            .setNeutralButton(R.string.video_shortcut_clear) { _, _ ->
+                VideoModeSettings.setShortcut(this, action, VideoModeSettings.Shortcut(KeyEvent.KEYCODE_UNKNOWN))
+                render()
+            }.create()
+        var captured: VideoModeSettings.Shortcut? = null
+        dialog.setOnKeyListener { _, keyCode, event ->
+            if (keyCode == KeyEvent.KEYCODE_BACK || KeyEvent.isModifierKey(keyCode) || keyCode == KeyEvent.KEYCODE_UNKNOWN) {
+                false
+            } else {
+                if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
+                    captured = VideoModeSettings.Shortcut(keyCode, VideoModeSettings.modifiers(event))
+                } else if (event.action == KeyEvent.ACTION_UP && captured?.keyCode == keyCode) {
+                    VideoModeSettings.setShortcut(this, action, captured!!)
+                    dialog.dismiss()
+                    render()
+                }
+                true
+            }
+        }
+        dialog.show()
     }
 
     private fun about(content: LinearLayout) {

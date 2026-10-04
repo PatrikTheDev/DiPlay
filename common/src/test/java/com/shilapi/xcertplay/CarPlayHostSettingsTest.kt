@@ -67,6 +67,26 @@ class CarPlayHostSettingsTest {
         controllers.close()
     }
 
+    @Test fun manualVideoIsAdvertisedAndKeyboardAvailabilityDoesNotRemoveCapability() {
+        com.shilapi.xcertplay.hud.BydOutputSettings.setVideoWhileParked(activity, false)
+        VideoModeSettings.setManual(activity, true)
+        VideoModeSettings.setAllowed(activity, true)
+        try {
+            val size = field("activeDisplaySize")!!
+            fun config() = activity.javaClass.getDeclaredMethod("createAirPlayConfig", size.javaClass)
+                .apply { isAccessible = true }.invoke(activity, size) as AirPlayConfig
+            assertTrue(config().videoInCar)
+            assertTrue(activity.dispatchKeyEvent(android.view.KeyEvent(android.view.KeyEvent.ACTION_DOWN, android.view.KeyEvent.KEYCODE_F11)))
+            assertTrue(activity.dispatchKeyEvent(android.view.KeyEvent(android.view.KeyEvent.ACTION_UP, android.view.KeyEvent.KEYCODE_F11)))
+            assertFalse(VideoModeSettings.allowed(activity))
+            assertTrue(config().videoInCar)
+            VideoModeSettings.setManual(activity, false)
+            assertFalse(config().videoInCar)
+        } finally {
+            activity.getSharedPreferences("diplay_video_mode", 0).edit().clear().commit()
+        }
+    }
+
     @Test fun configuredFingerCountsOpenTheMountedMenuWithoutLeavingCarPlay() {
         assertEquals(3, AirPlayPersistence.loadSettingsGestureFingers(activity))
         for (fingers in 2..4) {

@@ -636,4 +636,16 @@
     <string name="first_tcp_timeout">The iPhone did not connect to CarPlay in time</string>
     <string name="wireless_startup_retries_exhausted">Automatic retries stopped. Check the connection and retry manually.</string>
     <string name="retry_carplay_connection">Retry connection</string>
+    <string name="video_playback_title">Video playback</string>
+    <string name="video_manual_title">Manual video mode</string>
+    <string name="video_manual_description">Enable CarPlay video on a phone or tablet without reading the vehicle’s gear. Replaces the vehicle gear check and reconnects CarPlay.</string>
+    <string name="video_allowed_title">Allow video now</string>
+    <string name="video_allowed_description">Turning this off closes the video player and tells the iPhone that video is unavailable. Applies within a second without reconnecting. This choice is saved.</string>
+    <string name="video_shortcut_toggle">Toggle video shortcut</string>
+    <string name="video_shortcut_on">Video on shortcut</string>
+    <string name="video_shortcut_off">Video off shortcut</string>
+    <string name="video_shortcut_unassigned">Unassigned</string>
+    <string name="video_shortcut_clear">Clear shortcut</string>
+    <string name="video_shortcut_record">Press and release a key or key combination on your keyboard. Assigning an existing shortcut moves it to this action.</string>
+    <string name="video_shortcut_description">Shortcuts work while DiPlay or its video player has focus. Defaults: F9 toggles, F10 allows video, F11 disables video. Hold a key to send one action. Video on allows playback; select the video on your iPhone to start it.</string>
 </resources>

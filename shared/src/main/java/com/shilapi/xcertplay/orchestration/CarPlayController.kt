@@ -420,7 +420,7 @@ class CarPlayController(
                     listener.onVideoAllowedChanged(allowed)
                 },
                 onObserved = { parked ->
-                    debugLog("video in car gear=${when (parked) { true -> "P"; false -> "not-P"; null -> "unknown" }}")
+                    debugLog("video in car availability=${when (parked) { true -> "allowed"; false -> "unavailable"; null -> "unknown" }}")
                 },
             ).also { it.start() }
         }

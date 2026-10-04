@@ -5,7 +5,7 @@ import java.io.Closeable
 
 /** iOS 27 video in car, played by the host in the car's own player (see [VideoInCar]). */
 interface CarPlayVideoListener {
-    /** Whether the car is in P, or null when it cannot tell. Blocking; read once a second while CarPlay runs. */
+    /** Whether the host allows video (vehicle in P or manual availability), or null when unknown. Blocking; read once a second while CarPlay runs. */
     fun readParked(): Boolean?
 
     /** Video became allowed or not; when not, the player must close. Any thread. */
@@ -22,8 +22,8 @@ interface CarPlayVideoListener {
 }
 
 /**
- * Keeps [VideoInCar.allowed] in step with the car: allowed only while the gear reads P, so an unknown
- * gear (no ADB) keeps video off. Changes go to [onChanged].
+ * Keeps [VideoInCar.allowed] in step with the host availability source. Only an explicit true
+ * allows video; an unknown source keeps it off. Changes go to [onChanged].
  */
 internal class VideoInCarGate(
     private val readParked: () -> Boolean?,
