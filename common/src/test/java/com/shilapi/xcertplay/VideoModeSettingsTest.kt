@@ -37,16 +37,54 @@ class VideoModeSettingsTest {
         assertFalse(VideoModeSettings.allowed(context)) // Saved OFF survives re-enabling.
     }
 
-    @Test fun manualAvailabilityReplacesGearAndNeverReadsVehicleData() {
-        val unavailableVehicle: () -> Boolean? = { error("Manual mode must not query ADB") }
+    @Test fun manualAvailabilityStillChecksVehicleDataAndAllowsANeverObservedPhone() {
+        var reads = 0
+        val unavailableVehicle: () -> Boolean? = { reads++; null }
         VideoModeSettings.setManual(context, true)
         assertEquals(true, VideoModeSettings.playbackAllowed(context, unavailableVehicle))
+        assertEquals(1, reads)
         VideoModeSettings.setAllowed(context, false)
         assertEquals(false, VideoModeSettings.playbackAllowed(context, unavailableVehicle))
+        assertEquals(2, reads)
         VideoModeSettings.setManual(context, false)
         assertNull(VideoModeSettings.playbackAllowed(context) { null })
         assertEquals(true, VideoModeSettings.playbackAllowed(context) { true })
         assertEquals(false, VideoModeSettings.playbackAllowed(context) { false })
+    }
+
+    @Test fun explicitOnAndToggleShortcutsCannotOverrideNonParkOrLostVehicleGear() {
+        VideoModeSettings.setManual(context, true)
+        assertEquals(false, VideoModeSettings.playbackAllowed(context) { false })
+        press(KeyEvent.KEYCODE_F10)
+        assertTrue(VideoModeSettings.allowed(context))
+        assertEquals(false, VideoModeSettings.playbackAllowed(context) { false })
+        assertEquals(false, VideoModeSettings.playbackAllowed(context) { null })
+        press(KeyEvent.KEYCODE_F9)
+        press(KeyEvent.KEYCODE_F9)
+        assertTrue(VideoModeSettings.allowed(context))
+        assertEquals(false, VideoModeSettings.playbackAllowed(context) { null })
+    }
+
+    @Test fun aParkedVehicleFailsClosedWhenGearDisappearsAndRecoversOnlyInPark() {
+        VideoModeSettings.setManual(context, true)
+        assertEquals(true, VideoModeSettings.playbackAllowed(context) { true })
+        assertEquals(false, VideoModeSettings.playbackAllowed(context) { null })
+        assertEquals(false, VideoModeSettings.playbackAllowed(context) { false })
+        assertEquals(true, VideoModeSettings.playbackAllowed(context) { true })
+        VideoModeSettings.setAllowed(context, false)
+        assertEquals(false, VideoModeSettings.playbackAllowed(context) { true })
+    }
+
+    @Test fun gearObservedBeforeManualModeRemainsRequiredAfterModeAndSettingsReload() {
+        assertEquals(true, VideoModeSettings.playbackAllowed(context) { true })
+        VideoModeSettings.setManual(context, true)
+        assertEquals(false, VideoModeSettings.playbackAllowed(context) { null })
+        VideoModeSettings.setManual(context, false)
+        VideoModeSettings.setManual(context, true)
+        VideoModeSettings.setAllowed(context, true)
+        val reloaded = context.createPackageContext(context.packageName, 0)
+        assertEquals(false, VideoModeSettings.playbackAllowed(reloaded) { null })
+        assertEquals(true, VideoModeSettings.playbackAllowed(reloaded) { true })
     }
 
     @Test fun toggleIgnoresRepeatsAndExplicitOnOffAreIdempotent() {

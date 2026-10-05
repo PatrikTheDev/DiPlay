@@ -638,9 +638,9 @@
     <string name="retry_carplay_connection">Retry connection</string>
     <string name="video_playback_title">Video playback</string>
     <string name="video_manual_title">Manual video mode</string>
-    <string name="video_manual_description">Enable CarPlay video on a phone or tablet without reading the vehicle’s gear. Replaces the vehicle gear check and reconnects CarPlay.</string>
+    <string name="video_manual_description">For a phone or tablet without a vehicle gear source. Available gear is still checked: non-P blocks video. Once gear has been observed on this device, missing gear also blocks video, including after a restart. Changing this mode reconnects CarPlay.</string>
     <string name="video_allowed_title">Allow video now</string>
-    <string name="video_allowed_description">Turning this off closes the video player and tells the iPhone that video is unavailable. Applies within a second without reconnecting. This choice is saved.</string>
+    <string name="video_allowed_description">Requests video when the gear check permits it; this cannot override non-P or a missing previously observed gear source. Turning it off closes the video player and tells the iPhone that video is unavailable. Applies within a second without reconnecting. This choice is saved.</string>
     <string name="video_shortcut_toggle">Toggle video shortcut</string>
     <string name="video_shortcut_on">Video on shortcut</string>
     <string name="video_shortcut_off">Video off shortcut</string>

@@ -6,6 +6,7 @@ import com.shilapi.xcertplay.hud.BydOutputSettings
 
 /** Video availability on receivers that have no vehicle gear source. */
 internal object VideoModeSettings {
+    private const val VEHICLE_GEAR_OBSERVED = "vehicle_gear_observed"
     private fun prefs(context: Context) = context.getSharedPreferences("diplay_video_mode", Context.MODE_PRIVATE)
 
     fun manual(context: Context): Boolean = prefs(context).getBoolean("manual", false)
@@ -14,8 +15,20 @@ internal object VideoModeSettings {
     fun setAllowed(context: Context, allowed: Boolean) = prefs(context).edit().putBoolean("allowed", allowed).apply()
     fun offered(context: Context): Boolean = manual(context) || BydOutputSettings.videoWhileParkedActive(context)
 
-    fun playbackAllowed(context: Context, readVehicleParked: () -> Boolean?): Boolean? =
-        if (manual(context)) allowed(context) else readVehicleParked()
+    fun playbackAllowed(context: Context, readVehicleParked: () -> Boolean?): Boolean? {
+        // Manual availability cannot override an actual vehicle reading. Remember observed gear
+        // across reconnects/restarts so losing that source never turns a known vehicle into a phone.
+        val vehicleParked = readVehicleParked()
+        val settings = prefs(context)
+        if (vehicleParked != null && !settings.getBoolean(VEHICLE_GEAR_OBSERVED, false)) {
+            // This runs on the existing blocking gear-poll worker; persist the first observation
+            // synchronously so a following process restart cannot outrun an asynchronous write.
+            settings.edit().putBoolean(VEHICLE_GEAR_OBSERVED, true).commit()
+        }
+        if (!manual(context)) return vehicleParked
+        if (!allowed(context) || vehicleParked == false) return false
+        return vehicleParked == true || !settings.getBoolean(VEHICLE_GEAR_OBSERVED, false)
+    }
 
     enum class Action(val defaultKey: Int) {
         TOGGLE(KeyEvent.KEYCODE_F9), ON(KeyEvent.KEYCODE_F10), OFF(KeyEvent.KEYCODE_F11)
